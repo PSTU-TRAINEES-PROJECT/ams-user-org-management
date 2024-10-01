@@ -1,5 +1,5 @@
 services:
-  auth:
+  user-org:
     build:
       context: app
       dockerfile: Dockerfile
@@ -13,7 +13,7 @@ services:
     networks:
       - ams-network
     ports:
-      - 7001:7001
+      - 7002:7002
     env_file:
       - .env
 
