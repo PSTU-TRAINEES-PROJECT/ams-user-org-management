@@ -1,4 +1,5 @@
-from fastapi import Request
+from fastapi import Depends, Request
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from starlette.middleware.base import BaseHTTPMiddleware
 import logging
 
@@ -33,3 +34,8 @@ class LogRequestPathMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         
         return response
+
+
+
+async def authenticate_header(request: Request):    
+    return request.headers.get('X-User-ID')
