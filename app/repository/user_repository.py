@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from utils.helpers.enums import Status
-from schemas.base import User
+from schemas.base import User, UserUpdateData
 from sqlalchemy.future import select
 
 class UserRepository:
@@ -34,4 +34,18 @@ class UserRepository:
         await db.refresh(user)
 
 
+    async def update_user(self, user_id: int, user_update_data: UserUpdateData, db: AsyncSession):
+        user = await self.get_user_by_user_id(user_id, db)
+        if user:
+            user.username = user_update_data.username
+            user.first_name = user_update_data.first_name
+            user.last_name = user_update_data.last_name
+            user.mobile = user_update_data.mobile
+            await db.commit()
+            await db.refresh(user)
+
+    async def delete_user(self, user_id: int, db: AsyncSession):
+        user = await self.get_user_by_user_id(user_id, db)
+        await db.delete(user)
+        await db.commit()
 
