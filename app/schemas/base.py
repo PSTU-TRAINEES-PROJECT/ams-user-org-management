@@ -5,6 +5,6 @@ Base = declarative_base()
 
 
 from schemas.language import Language
-from schemas.users import User
+from schemas.users import User, UserUpdateData
 from schemas.organization import Organization
 from schemas.membership import Membership

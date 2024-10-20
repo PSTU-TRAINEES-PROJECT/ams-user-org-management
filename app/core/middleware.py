@@ -1,8 +1,7 @@
-from fastapi import Depends, Request
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 import logging
-from app.core.const import GREEN_BG, RESET
+from core.const import GREEN_BG, RESET
 
 logging.basicConfig(level=logging.INFO)
 

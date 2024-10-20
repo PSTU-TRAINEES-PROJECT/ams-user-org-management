@@ -1,3 +1,4 @@
+from pydantic import BaseModel
 from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, String
 import datetime
 import pytz
@@ -46,5 +47,19 @@ class User(Base):
 
 
 
+class UserUpdateData(BaseModel):
+    username: str
+    first_name: str
+    last_name: str
+    mobile: str
 
+    class Config:
+        schema_extra = {
+            "example": {
+                "username": "John",
+                "first_name": "John",
+                "last_name": "Doe",
+                "mobile": "01700000000"
+            }
+        }
 
