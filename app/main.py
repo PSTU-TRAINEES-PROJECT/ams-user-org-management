@@ -5,13 +5,15 @@ from core.middleware import LogRequestPathMiddleware
 from core import const, auth
 from config import get_config
 from routers.api.v1 import user_router, organization_router
-
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI(
     title=get_config().project_title,
     docs_url="/api/docs",
     debug=True
 )
+
+app.mount("/uploads/profile_images", StaticFiles(directory="uploads/profile_images"), name="profile_images")
 
 app.add_middleware(
     CORSMiddleware, allow_headers=["*"], allow_origins=["*"], allow_methods=["*"]
