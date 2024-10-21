@@ -28,8 +28,9 @@ class UserRepository:
         users = result.scalars().all()
         return users
 
-    async def update_user_status(self, user: User, status: Status, db: AsyncSession):
+    async def update_user_status(self, user: User, status: Status, image_path:str, db: AsyncSession):
         user.status = status
+        user.profile_image = image_path
         await db.commit()
         await db.refresh(user)
 

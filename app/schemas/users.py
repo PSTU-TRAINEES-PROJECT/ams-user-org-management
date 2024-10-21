@@ -24,6 +24,7 @@ class User(Base):
     
     status = Column(Enum(Status), nullable=False, default=Status.INACTIVE.value, server_default=Status.INACTIVE.value)
 
+    profile_image = Column(String(255), nullable=True)
 
     language_code = Column(String(10), ForeignKey('languages.code'), nullable=True)  # Nullable
 
@@ -41,7 +42,9 @@ class User(Base):
             "updated_at": self.updated_at.isoformat(),
             "deleted_at": self.deleted_at.isoformat() if self.deleted_at else None,
             "status": self.status,
-            "language_code": self.language_code if self.language_code else None
+            "language_code": self.language_code if self.language_code else None,
+            "profile_image": f"/uploads/profile_images/{self.profile_image}" if self.profile_image else None  # Update this line
+
         }
 
 
