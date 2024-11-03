@@ -7,4 +7,4 @@ __pycache__/
 alembic/
 alembic.ini
 app/alembic.ini
-
+app/uploads/profile_images/
