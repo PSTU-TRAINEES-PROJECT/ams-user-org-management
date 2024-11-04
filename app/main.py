@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from core.middleware import LogRequestPathMiddleware
 from core import const, auth
 from config import get_config
-from routers.api.v1 import user_router, organization_router
+from routers.api.v1 import user_router, organization_router, service_profile_router
 
 
 app = FastAPI(
@@ -29,6 +29,11 @@ app.include_router(
     organization_router,
     prefix=const.API_STR,
     tags=["Organization Management"]
+)
+app.include_router(
+    service_profile_router,
+    prefix=const.API_STR,
+    tags=["Service Management"]
 )
 
 
