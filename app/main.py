@@ -1,9 +1,10 @@
+from fastapi.exceptions import RequestValidationError
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from core.middleware import CustomLogRequestPathMiddleware
 from core import const, auth
-from config import get_config
+from config import get_config, validation_exception_handler
 from routers.api.v1 import user_router, organization_router, service_profile_router
 
 
@@ -41,6 +42,9 @@ app.include_router(
 # app.add_event_handler("startup", auth.on_startup)
 # app.add_event_handler("shutdown", auth.on_shutdown)
 
+
+# Register the custom validation error handler
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
 if __name__ == "__main__":
     uvicorn.run(
