@@ -15,9 +15,6 @@ class UserService:
     def __init__(self, repository: UserRepository):
         self.repository = repository
 
-    def get_image_url(self, filename: str) -> str:
-        return f"/uploads/profile_images/{filename}"
-
 
     async def get_all_users(self, db: AsyncSession):
         try:
@@ -148,7 +145,7 @@ class UserService:
                     content={"message": "User not found"}
                 )
 
-            valid_image_types = ['jpeg', 'png', 'gif']
+            valid_image_types = ['jpeg', 'png', 'gif', 'jpg']
             image_type = imghdr.what(file.file)
 
             if image_type not in valid_image_types:
@@ -170,7 +167,7 @@ class UserService:
                 shutil.copyfileobj(file.file, buffer)
 
             # Update user profile image in DB
-            await self.repository.update_user_profile_image(user, f"{user_id}.{file_extension}", db)
+            await self.repository.update_user_profile_image(user, file_location, db)
 
             return JSONResponse(
                 status_code=HTTPStatus.OK,

@@ -45,8 +45,7 @@ class User(Base):
             "deleted_at": self.deleted_at.isoformat() if self.deleted_at else None,
             "status": self.status,
             "language_code": self.language_code if self.language_code else None,
-            "profile_image": f"/uploads/profile_images/{self.profile_image}" if self.profile_image else None  # Update this line
-
+            "profile_image": self.profile_image if self.profile_image else None
         }
 
 

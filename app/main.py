@@ -1,3 +1,4 @@
+import os
 from fastapi.exceptions import RequestValidationError
 import uvicorn
 from fastapi import FastAPI
@@ -15,6 +16,7 @@ app = FastAPI(
     debug=True
 )
 
+os.makedirs("uploads/profile_images", exist_ok=True)
 app.mount("/uploads/profile_images", StaticFiles(directory="uploads/profile_images"), name="profile_images")
 
 app.add_middleware(
