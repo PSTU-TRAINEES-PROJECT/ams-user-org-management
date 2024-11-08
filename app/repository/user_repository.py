@@ -10,12 +10,6 @@ class UserRepository:
         user = result.scalars().first()
         return user
     
-    async def get_user_by_username(self, username: str, db: AsyncSession) -> User:
-        query = select(User).where(User.username == username)
-        result = await db.execute(query)
-        user = result.scalars().first()
-        return user
-    
     async def get_user_by_user_id(self, user_id: int, db: AsyncSession) -> User:
         query = select(User).where(User.id == user_id)
         result = await db.execute(query)
@@ -37,10 +31,18 @@ class UserRepository:
     async def update_user(self, user_id: int, user_update_data: UserUpdateData, db: AsyncSession):
         user = await self.get_user_by_user_id(user_id, db)
         if user:
-            user.username = user_update_data.username
-            user.first_name = user_update_data.first_name
-            user.last_name = user_update_data.last_name
-            user.mobile = user_update_data.mobile
+            if user_update_data.first_name is not None:
+                user.first_name = user_update_data.first_name
+            if user_update_data.last_name is not None:
+                user.last_name = user_update_data.last_name
+            if user_update_data.mobile is not None:
+                user.mobile = user_update_data.mobile
+            if user_update_data.age is not None:
+                user.age = user_update_data.age
+            if user_update_data.email is not None:
+                user.email = user_update_data.email
+            if user_update_data.password is not None:
+                user.password_hash = user_update_data.password
             await db.commit()
             await db.refresh(user)
 

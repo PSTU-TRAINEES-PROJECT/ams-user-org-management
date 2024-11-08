@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic import BaseModel
 from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, String
 import datetime
@@ -12,7 +13,6 @@ class User(Base):
     __tablename__ = 'users'
 
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String(30), unique=True)
     email = Column(String(100), index=True)
     first_name = Column(String(50), nullable=True)
     last_name = Column(String(50), nullable=True)
@@ -24,7 +24,7 @@ class User(Base):
     deleted_at = Column(DateTime(timezone=True), nullable=True)
     
     status = Column(Enum(Status), nullable=False, default=Status.INACTIVE.value, server_default=Status.INACTIVE.value)
-
+    age = Column(Integer, nullable=True)
 
     language_code = Column(String(10), ForeignKey('languages.code'), nullable=True)  # Nullable
 
@@ -32,12 +32,12 @@ class User(Base):
     def to_dict(self):
         return {
             "id": self.id,
-            "username": self.username,
             "email": self.email,
             "first_name": self.first_name,
             "last_name": self.last_name,
             "email_verified": self.email_verified,
             "mobile": self.mobile,
+            "age": self.age if self.age else None,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
             "deleted_at": self.deleted_at.isoformat() if self.deleted_at else None,
@@ -48,18 +48,22 @@ class User(Base):
 
 
 class UserUpdateData(BaseModel):
-    username: str
-    first_name: str
-    last_name: str
-    mobile: str
+    first_name: Optional[str]
+    last_name: Optional[str]
+    mobile: Optional[str]
+    email: Optional[str]
+    age: Optional[int]
+    password: Optional[str]
 
     class Config:
         schema_extra = {
             "example": {
-                "username": "John",
                 "first_name": "John",
                 "last_name": "Doe",
-                "mobile": "01700000000"
+                "mobile": "01700000000",
+                "email": "john.doe@example.com",
+                "age": 25,
+                "password": "password"
             }
         }
 

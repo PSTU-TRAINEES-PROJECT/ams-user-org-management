@@ -1,5 +1,6 @@
 from http import HTTPStatus
 from fastapi.responses import JSONResponse
+from core.auth import hash_password
 from utils.helpers.enums import Status
 from repository.user_repository import UserRepository
 from sqlalchemy.ext.asyncio import  AsyncSession
@@ -54,13 +55,24 @@ class UserService:
     async def update_user(self, user_id: int, user_update_data: UserUpdateData, db: AsyncSession):
         try:
             user = await self.repository.get_user_by_user_id(user_id, db)
-            
             if not user:
                 return JSONResponse(
                     status_code=HTTPStatus.NOT_FOUND,
                     content={"message": "User not found"}
                 )
             
+            if user_update_data.email:
+                user_by_email = await self.repository.get_user_by_email(user_update_data.email, db)
+                if user_by_email:
+                    return JSONResponse(
+                        status_code=HTTPStatus.BAD_REQUEST,
+                        content={"message": "Email already exists"}
+                    )
+
+
+            if user_update_data.password:
+                user_update_data.password = hash_password(user_update_data.password)
+
             await self.repository.update_user(user_id, user_update_data, db)
             
             return JSONResponse(
