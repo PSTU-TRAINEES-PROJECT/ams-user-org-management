@@ -127,4 +127,24 @@ class ServiceProfileRepository:
             db.add(new_service_profile)
             await db.commit()
             return new_service_profile
+    
+    async def get_all_profiles_by_platform_type(self, platform_type: PlatformTypes, db: AsyncSession):
+        if platform_type == PlatformTypes.DOCTOR:
+            model = Doctor
+        elif platform_type == PlatformTypes.ENGINEER:
+            model = Engineer
+        elif platform_type == PlatformTypes.TEACHER:
+            model = Teacher
+        elif platform_type == PlatformTypes.PUBLIC_FIGURE:
+            model = PublicFigure
+        elif platform_type == PlatformTypes.BUSINESS:
+            model = Business
+        elif platform_type == PlatformTypes.LAWYER:
+            model = Lawyer
+        else:
+            return None
+
+        query = select(model).where(model.deleted_at == None)
+        result = await db.execute(query)
+        return result.scalars().all()
 

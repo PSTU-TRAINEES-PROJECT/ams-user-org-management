@@ -1,6 +1,7 @@
 from fastapi.responses import JSONResponse
 from http import HTTPStatus
 from sqlalchemy.ext.asyncio import AsyncSession
+from utils.helpers.enums import PlatformTypes
 from utils.helpers.file_handler import get_base64_file, save_base64_file
 from repository.service_profile_repository import ServiceProfileRepository
 from repository.department_repository import DepartmentRepository
@@ -83,3 +84,59 @@ class ServiceProfileService:
                 status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
                 content={"message": f"Internal server error. ERROR: {e}"}
             )
+
+
+    async def get_list_service_profiles(self, platform_type: int, db: AsyncSession):
+        try:
+            try:
+                platform_enum = PlatformTypes(platform_type)
+            except ValueError:
+                return JSONResponse(
+                    status_code=HTTPStatus.BAD_REQUEST,
+                    content={"message": "Invalid platform type"}
+                )
+                
+            # Get all profiles for the specified platform type
+            profile_list = await self.service_profile_repository.get_all_profiles_by_platform_type(platform_enum, db)
+            if not profile_list:
+                return JSONResponse(
+                    status_code=HTTPStatus.NOT_FOUND,
+                    content={"message": f"No {platform_enum.name.lower()}s found"}
+                )
+            
+            formatted_profiles = []
+            for profile in profile_list:
+                # Get documents for each profile
+                document_list = await self.user_document_repository.get_user_documents_by_ids(profile.document_id_list, db)
+                formatted_documents = [
+                    get_base64_file(doc.file_name) for doc in document_list
+                ]
+                
+                # Get department info
+                department = await self.department_repository.get_department_by_id_and_platform_type(
+                    profile.department_id, 
+                    platform_enum.value, 
+                    db
+                )
+                
+                # Format profile data
+                profile_dict = profile.to_dict()
+                profile_dict.pop('document_id_list', None)
+                profile_dict['department_name'] = department.name if department else None
+                profile_dict['documents'] = formatted_documents
+                
+                formatted_profiles.append(profile_dict)
+
+            return JSONResponse(
+                status_code=HTTPStatus.OK,
+                content={
+                    "message": f"{platform_enum.name.lower()} list fetched successfully", 
+                    "data": formatted_profiles
+                }
+            )
+        except Exception as e:
+            return JSONResponse(
+                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+                content={"message": f"Internal server error. ERROR: {e}"}
+            )
+

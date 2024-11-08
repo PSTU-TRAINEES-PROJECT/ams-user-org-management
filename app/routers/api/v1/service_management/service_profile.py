@@ -35,3 +35,12 @@ async def get_self_service_profile(db: AsyncSession = Depends(get_db), x_user_id
 
 
 
+@service_profile_router.get("/list-service-profiles/{platform_type}")
+async def get_list_service_profiles(
+    platform_type: int,
+    db: AsyncSession = Depends(get_db), 
+    x_user_id_from_request: str = Depends(authenticate_header)
+):
+    print(f"x_user_id_from_request: {x_user_id_from_request}")
+    return await service_profile_service.get_list_service_profiles(platform_type, db)
+
