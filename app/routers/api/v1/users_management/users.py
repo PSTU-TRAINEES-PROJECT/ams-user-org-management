@@ -6,6 +6,7 @@ from repository.database import get_db
 from repository.user_repository import UserRepository
 from services.users import UserService
 from sqlalchemy.ext.asyncio import  AsyncSession
+from fastapi import File, UploadFile
 
 user_router = APIRouter()
 repository = UserRepository()
@@ -31,7 +32,6 @@ async def get_user(user_id: int, db: AsyncSession = Depends(get_db)):
     return await user_service.get_user(user_id, db)
 
 
-
 @user_router.post("/update-user/{user_id}")
 async def update_user(user_id: int, user_update_data: UserUpdateData, db: AsyncSession = Depends(get_db)):
     return await user_service.update_user(user_id, user_update_data, db)
@@ -42,4 +42,6 @@ async def update_user(user_id: int, user_update_data: UserUpdateData, db: AsyncS
 async def delete_user(user_id: int, db: AsyncSession = Depends(get_db)):
     return await user_service.delete_user(user_id, db)
 
-
+@user_router.post("/update-user-profile-image/{user_id}")
+async def update_user_profile_image(user_id: int, file: UploadFile = File(...), db: AsyncSession = Depends(get_db)):
+    return await user_service.update_user_profile_image(user_id, file, db)

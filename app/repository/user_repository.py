@@ -28,7 +28,7 @@ class UserRepository:
         await db.refresh(user)
 
 
-    async def update_user(self, user_id: int, user_update_data: UserUpdateData, db: AsyncSession):
+    async def update_user(self, user_id: int, user_update_data: UserUpdateData, image_path: str, db: AsyncSession):
         user = await self.get_user_by_user_id(user_id, db)
         if user:
             if user_update_data.first_name is not None:
@@ -51,3 +51,7 @@ class UserRepository:
         await db.delete(user)
         await db.commit()
 
+    async def update_user_profile_image(self, user: User, image_path: str, db: AsyncSession):
+        user.profile_image = image_path
+        await db.commit()
+        await db.refresh(user)
