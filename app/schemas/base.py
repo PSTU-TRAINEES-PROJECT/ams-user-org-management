@@ -17,4 +17,4 @@ from schemas.lawyer import Lawyer
 from schemas.public_figure import PublicFigure
 from schemas.teacher import Teacher
 from schemas.user_document import UserDocument
-
+from schemas.service_profile_base import ServiceProfileBase
