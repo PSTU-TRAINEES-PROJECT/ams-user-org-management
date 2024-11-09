@@ -1,5 +1,9 @@
 from http import HTTPStatus
 from fastapi.responses import JSONResponse
+from repository.department_repository import DepartmentRepository
+from repository.service_profile_repository import ServiceProfileRepository
+from repository.user_document_repository import UserDocumentRepository
+from utils.helpers.file_handler import get_base64_file
 from core.auth import hash_password
 from utils.helpers.enums import Status
 from repository.user_repository import UserRepository
@@ -12,8 +16,11 @@ import imghdr
 
 
 class UserService:
-    def __init__(self, repository: UserRepository):
+    def __init__(self, repository: UserRepository, service_profile_repository: ServiceProfileRepository, user_document_repository: UserDocumentRepository, department_repository: DepartmentRepository):
         self.repository = repository
+        self.service_profile_repository = service_profile_repository
+        self.user_document_repository = user_document_repository
+        self.department_repository = department_repository
 
 
     async def get_all_users(self, db: AsyncSession):
@@ -124,9 +131,28 @@ class UserService:
                     content={"message": "User not found"}
                 )
             
+            existing_service_profile, platform_type = await self.service_profile_repository.get_service_profile_by_user_id(user_id, db)
+            
+            if not existing_service_profile:
+                return JSONResponse(
+                    status_code=HTTPStatus.OK,
+                    content={"message": "User fetched successfully", "user": user.to_dict(), "service_profile": None, "document_list": None}
+                )
+            
+            document_list = await self.user_document_repository.get_user_documents_by_ids(existing_service_profile.document_id_list, db)
+            formatted_documents = [
+                get_base64_file(doc.file_name) for doc in document_list
+            ]
+            
+            department = await self.department_repository.get_department_by_id_and_platform_type(existing_service_profile.department_id, platform_type, db)
+            
+            service_profile_dict = existing_service_profile.to_dict()
+            service_profile_dict.pop('document_id_list', None)
+            service_profile_dict['department_name'] = department.name
+            
             return JSONResponse(
                 status_code=HTTPStatus.OK,
-                content={"message": "User fetched successfully", "user": user.to_dict()}
+                content={"message": "User fetched successfully", "user": user.to_dict(), "service_profile": service_profile_dict, "document_list": formatted_documents}
             )
 
         except Exception as e:
