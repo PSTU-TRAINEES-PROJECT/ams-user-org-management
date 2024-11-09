@@ -1,4 +1,3 @@
-from fastapi.responses import JSONResponse
 from http import HTTPStatus
 from sqlalchemy.ext.asyncio import AsyncSession
 from utils.helpers.enums import PlatformTypes
@@ -7,6 +6,9 @@ from repository.service_profile_repository import ServiceProfileRepository
 from repository.department_repository import DepartmentRepository
 from repository.user_document_repository import UserDocumentRepository
 from schemas.base import ServiceProfileCreateData
+from utils.helpers.response_handler import CustomResponseHandler
+
+
 
 class ServiceProfileService:
     def __init__(self, service_profile_repository: ServiceProfileRepository, department_repository: DepartmentRepository, user_document_repository: UserDocumentRepository):
@@ -19,9 +21,9 @@ class ServiceProfileService:
         try:
             existing_service_profile = await self.service_profile_repository.get_service_profile_by_user_id_platform_type(x_user_id_from_request, profile_data.platform_type, db)
             if existing_service_profile:
-                return JSONResponse(
-                    status_code=HTTPStatus.CONFLICT,
-                    content={"message": "Service profile already exists for this user."}
+                return CustomResponseHandler.error(
+                    message="Service profile already exists for this user.",
+                    status_code=HTTPStatus.CONFLICT
                 )
             
             department = await self.department_repository.get_department_id_by_name_and_platform_type(profile_data.department, profile_data.platform_type, db)
@@ -36,22 +38,22 @@ class ServiceProfileService:
                     document_ids.append(document.id)
                     
                 except Exception as e:
-                    return JSONResponse(
-                        status_code=HTTPStatus.BAD_REQUEST,
-                        content={"message": f"Error processing document: {str(e)}"}
+                    return CustomResponseHandler.error(
+                        message=f"Error processing document: {str(e)}",
+                        status_code=HTTPStatus.BAD_REQUEST
                     )
             
             new_service_profile = await self.service_profile_repository.create_service_profile(x_user_id_from_request, profile_data, department.id, document_ids, db)
             
 
-            return JSONResponse(
-                status_code=HTTPStatus.CREATED,
-                content={"message": "Service profile created successfully"}
+            return CustomResponseHandler.success(
+                message="Service profile created successfully",
+                status_code=HTTPStatus.CREATED
             )
         except Exception as e:
-            return JSONResponse(
-                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                content={"message": f"Internal server error. ERROR: {e}"}
+            return CustomResponseHandler.error(
+                message=f"Internal server error. ERROR: {e}",
+                status_code=HTTPStatus.INTERNAL_SERVER_ERROR
             )
     
     
@@ -59,9 +61,9 @@ class ServiceProfileService:
         try:
             existing_service_profile, platform_type = await self.service_profile_repository.get_service_profile_by_user_id(x_user_id_from_request, db)
             if not existing_service_profile:
-                return JSONResponse(
-                    status_code=HTTPStatus.NOT_FOUND,
-                    content={"message": "Service profile not found"}
+                return CustomResponseHandler.error(
+                    message="Service profile not found",
+                    status_code=HTTPStatus.NOT_FOUND
                 )
             
             document_list = await self.user_document_repository.get_user_documents_by_ids(existing_service_profile.document_id_list, db)
@@ -75,14 +77,15 @@ class ServiceProfileService:
             service_profile_dict.pop('document_id_list', None)
             service_profile_dict['department_name'] = department.name
             
-            return JSONResponse(
-                status_code=HTTPStatus.OK,
-                content={"message": "Service profile fetched successfully", "data": {"service_profile": service_profile_dict, "document_list": formatted_documents}}
+            return CustomResponseHandler.success(
+                message="Service profile fetched successfully",
+                data={"service_profile": service_profile_dict, "document_list": formatted_documents},
+                status_code=HTTPStatus.OK
             )
         except Exception as e:
-            return JSONResponse(
-                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                content={"message": f"Internal server error. ERROR: {e}"}
+            return CustomResponseHandler.error(
+                message=f"Internal server error. ERROR: {e}",
+                status_code=HTTPStatus.INTERNAL_SERVER_ERROR
             )
 
 
@@ -91,35 +94,31 @@ class ServiceProfileService:
             try:
                 platform_enum = PlatformTypes(platform_type)
             except ValueError:
-                return JSONResponse(
-                    status_code=HTTPStatus.BAD_REQUEST,
-                    content={"message": "Invalid platform type"}
+                return CustomResponseHandler.error(
+                    message="Invalid platform type",
+                    status_code=HTTPStatus.BAD_REQUEST
                 )
                 
-            # Get all profiles for the specified platform type
             profile_list = await self.service_profile_repository.get_all_profiles_by_platform_type(platform_enum, db)
             if not profile_list:
-                return JSONResponse(
-                    status_code=HTTPStatus.NOT_FOUND,
-                    content={"message": f"No {platform_enum.name.lower()}s found"}
+                return CustomResponseHandler.error(
+                    message=f"No {platform_enum.name.lower()}s found",
+                    status_code=HTTPStatus.NOT_FOUND
                 )
             
             formatted_profiles = []
             for profile in profile_list:
-                # Get documents for each profile
                 document_list = await self.user_document_repository.get_user_documents_by_ids(profile.document_id_list, db)
                 formatted_documents = [
                     get_base64_file(doc.file_name) for doc in document_list
                 ]
                 
-                # Get department info
                 department = await self.department_repository.get_department_by_id_and_platform_type(
                     profile.department_id, 
                     platform_enum.value, 
                     db
                 )
                 
-                # Format profile data
                 profile_dict = profile.to_dict()
                 profile_dict.pop('document_id_list', None)
                 profile_dict['department_name'] = department.name if department else None
@@ -127,16 +126,14 @@ class ServiceProfileService:
                 
                 formatted_profiles.append(profile_dict)
 
-            return JSONResponse(
-                status_code=HTTPStatus.OK,
-                content={
-                    "message": f"{platform_enum.name.lower()} list fetched successfully", 
-                    "data": formatted_profiles
-                }
+            return CustomResponseHandler.success(
+                message=f"{platform_enum.name.lower()} list fetched successfully",
+                data={"profiles": formatted_profiles},
+                status_code=HTTPStatus.OK
             )
         except Exception as e:
-            return JSONResponse(
-                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                content={"message": f"Internal server error. ERROR: {e}"}
+            return CustomResponseHandler.error(
+                message=f"Internal server error. ERROR: {e}",
+                status_code=HTTPStatus.INTERNAL_SERVER_ERROR
             )
 

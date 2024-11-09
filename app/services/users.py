@@ -1,5 +1,4 @@
 from http import HTTPStatus
-from fastapi.responses import JSONResponse
 from repository.department_repository import DepartmentRepository
 from repository.service_profile_repository import ServiceProfileRepository
 from repository.user_document_repository import UserDocumentRepository
@@ -13,6 +12,8 @@ from fastapi import UploadFile
 import shutil
 import os
 import imghdr
+from utils.helpers.response_handler import CustomResponseHandler
+
 
 
 class UserService:
@@ -29,15 +30,16 @@ class UserService:
             
             user_list = [user.to_dict() for user in user_list]
             
-            return JSONResponse(
-                status_code=HTTPStatus.OK,
-                content={"message": f"User's list fetched successfully", "user_list": user_list}
+            return CustomResponseHandler.success(
+                message=f"User's list fetched successfully",
+                data={"user_list": user_list},
+                status_code=HTTPStatus.OK
             )
 
         except Exception as e:
-            return JSONResponse(
-                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                content={"message": f"Internal server error. ERROR: {e}"}
+            return CustomResponseHandler.error(
+                message=f"Internal server error. ERROR: {e}",
+                status_code=HTTPStatus.INTERNAL_SERVER_ERROR
             )
 
 
@@ -46,39 +48,39 @@ class UserService:
             user = await self.repository.get_user_by_user_id(user_id, db)
             
             if not user:
-                return JSONResponse(
-                    status_code=HTTPStatus.NOT_FOUND,
-                    content={"message": "User not found"}
+                return CustomResponseHandler.error(
+                    message="User not found",
+                    status_code=HTTPStatus.NOT_FOUND
                 )
             
             await self.repository.update_user_status(user, status, db)
             
-            return JSONResponse(
-                status_code=HTTPStatus.OK,
-                content={"message": "User status updated successfully"}
+            return CustomResponseHandler.success(
+                message="User status updated successfully",
+                status_code=HTTPStatus.OK
             )
 
         except Exception as e:
-            return JSONResponse(
-                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                content={"message": f"Internal server error. ERROR: {e}"}
+            return CustomResponseHandler.error(
+                message=f"Internal server error. ERROR: {e}",
+                status_code=HTTPStatus.INTERNAL_SERVER_ERROR
             )
 
     async def update_user(self, user_id: int, user_update_data: UserUpdateData, db: AsyncSession):
         try:
             user = await self.repository.get_user_by_user_id(user_id, db)
             if not user:
-                return JSONResponse(
-                    status_code=HTTPStatus.NOT_FOUND,
-                    content={"message": "User not found"}
+                return CustomResponseHandler.error(
+                    message="User not found",
+                    status_code=HTTPStatus.NOT_FOUND
                 )
             
             if user_update_data.email:
                 user_by_email = await self.repository.get_user_by_email(user_update_data.email, db)
                 if user_by_email:
-                    return JSONResponse(
-                        status_code=HTTPStatus.BAD_REQUEST,
-                        content={"message": "Email already exists"}
+                    return CustomResponseHandler.error(
+                        message="Email already exists",
+                        status_code=HTTPStatus.BAD_REQUEST
                     )
 
 
@@ -87,15 +89,15 @@ class UserService:
 
             await self.repository.update_user(user_id, user_update_data, db)
             
-            return JSONResponse(
-                status_code=HTTPStatus.OK,
-                content={"message": "User updated successfully"}
+            return CustomResponseHandler.success(
+                message="User updated successfully",
+                status_code=HTTPStatus.OK
             )
 
         except Exception as e:
-            return JSONResponse(
-                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                content={"message": f"Internal server error. ERROR: {e}"}
+            return CustomResponseHandler.error(
+                message=f"Internal server error. ERROR: {e}",
+                status_code=HTTPStatus.INTERNAL_SERVER_ERROR
             )
 
     async def delete_user(self, user_id: int, db: AsyncSession):
@@ -103,22 +105,22 @@ class UserService:
             user = await self.repository.get_user_by_user_id(user_id, db)
             
             if not user:
-                return JSONResponse(
-                    status_code=HTTPStatus.NOT_FOUND,
-                    content={"message": "User not found"}
+                return CustomResponseHandler.error(
+                    message="User not found",
+                    status_code=HTTPStatus.NOT_FOUND
                 )
             
             await self.repository.delete_user(user_id, db)
             
-            return JSONResponse(
-                status_code=HTTPStatus.OK,
-                content={"message": "User deleted successfully"}
+            return CustomResponseHandler.success(
+                message="User deleted successfully",
+                status_code=HTTPStatus.OK
             )
 
         except Exception as e:
-            return JSONResponse(
-                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                content={"message": f"Internal server error. ERROR: {e}"}
+            return CustomResponseHandler.error(
+                message=f"Internal server error. ERROR: {e}",
+                status_code=HTTPStatus.INTERNAL_SERVER_ERROR
             )
     
     async def get_user(self, user_id: int, db: AsyncSession):
@@ -126,17 +128,18 @@ class UserService:
             user = await self.repository.get_user_by_user_id(user_id, db)
             
             if not user:
-                return JSONResponse(
-                    status_code=HTTPStatus.NOT_FOUND,
-                    content={"message": "User not found"}
+                return CustomResponseHandler.error(
+                    message="User not found",
+                    status_code=HTTPStatus.NOT_FOUND
                 )
             
             existing_service_profile, platform_type = await self.service_profile_repository.get_service_profile_by_user_id(user_id, db)
             
             if not existing_service_profile:
-                return JSONResponse(
-                    status_code=HTTPStatus.OK,
-                    content={"message": "User fetched successfully", "user": user.to_dict(), "service_profile": None, "document_list": None}
+                return CustomResponseHandler.success(
+                    message="User fetched successfully",
+                    data={"user": user.to_dict(), "service_profile": None, "document_list": None},
+                    status_code=HTTPStatus.OK
                 )
             
             document_list = await self.user_document_repository.get_user_documents_by_ids(existing_service_profile.document_id_list, db)
@@ -150,34 +153,35 @@ class UserService:
             service_profile_dict.pop('document_id_list', None)
             service_profile_dict['department_name'] = department.name
             
-            return JSONResponse(
-                status_code=HTTPStatus.OK,
-                content={"message": "User fetched successfully", "user": user.to_dict(), "service_profile": service_profile_dict, "document_list": formatted_documents}
+            return CustomResponseHandler.success(
+                message="User fetched successfully",
+                data={"user": user.to_dict(), "service_profile": service_profile_dict, "document_list": formatted_documents},
+                status_code=HTTPStatus.OK
             )
 
         except Exception as e:
-            return JSONResponse(
-                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                content={"message": f"Internal server error. ERROR: {e}"}
+            return CustomResponseHandler.error(
+                message=f"Internal server error. ERROR: {e}",
+                status_code=HTTPStatus.INTERNAL_SERVER_ERROR
             )
- 
+
     async def update_user_profile_image(self, user_id: int, file: UploadFile, db: AsyncSession):
         try:
             user = await self.repository.get_user_by_user_id(user_id, db)
 
             if not user:
-                return JSONResponse(
-                    status_code=HTTPStatus.NOT_FOUND,
-                    content={"message": "User not found"}
+                return CustomResponseHandler.error(
+                    message="User not found",
+                    status_code=HTTPStatus.NOT_FOUND
                 )
 
             valid_image_types = ['jpeg', 'png', 'gif', 'jpg']
             image_type = imghdr.what(file.file)
 
             if image_type not in valid_image_types:
-                return JSONResponse(
-                    status_code=HTTPStatus.BAD_REQUEST,
-                    content={"message": "File type not allowed. Only images are accepted."}
+                return CustomResponseHandler.error(
+                    message="File type not allowed. Only images are accepted.",
+                    status_code=HTTPStatus.BAD_REQUEST
                 )
 
 
@@ -195,13 +199,14 @@ class UserService:
             # Update user profile image in DB
             await self.repository.update_user_profile_image(user, file_location, db)
 
-            return JSONResponse(
-                status_code=HTTPStatus.OK,
-                content={"message": "User profile image updated successfully", "file_location": file_location}
+            return CustomResponseHandler.success(
+                message="User profile image updated successfully",
+                data={"file_location": file_location},
+                status_code=HTTPStatus.OK
             )
 
         except Exception as e:
-            return JSONResponse(
-                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                content={"message": f"Internal server error. ERROR: {e}"}
+            return CustomResponseHandler.error(
+                message=f"Internal server error. ERROR: {e}",
+                status_code=HTTPStatus.INTERNAL_SERVER_ERROR
             )
