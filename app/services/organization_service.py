@@ -1,8 +1,10 @@
-from fastapi.responses import JSONResponse
 from http import HTTPStatus
 from sqlalchemy.ext.asyncio import AsyncSession
 from repository.organization_repository import OrganizationRepository
 from repository.membership_repository import MembershipRepository
+from utils.helpers.response_handler import CustomResponseHandler
+
+
 
 class OrganizationService:
     def __init__(self, organization_repository: OrganizationRepository, membership_repository: MembershipRepository):
@@ -13,16 +15,16 @@ class OrganizationService:
         try:
             existing_organization = await self.organization_repository.get_organization_by_name(name, db)
             if existing_organization:
-                return JSONResponse(
-                    status_code=HTTPStatus.CONFLICT,
-                    content={"message": "Organization with this name already exists."}
+                return CustomResponseHandler.error(
+                    message="Organization with this name already exists.",
+                    status_code=HTTPStatus.CONFLICT
                 )
 
             user_membership = await self.membership_repository.get_membership_by_user_id_and_role(user_id, 'admin', db)
             if user_membership:
-                return JSONResponse(
-                    status_code=HTTPStatus.CONFLICT,
-                    content={"message": "User already has an organization with admin role."}
+                return CustomResponseHandler.error(
+                    message="User already has an organization with admin role.",
+                    status_code=HTTPStatus.CONFLICT
                 )
             
 
@@ -31,12 +33,13 @@ class OrganizationService:
 
             new_membership = await self.membership_repository.create_membership(user_id, new_organization.id, 'admin', db)
 
-            return JSONResponse(
-                status_code=HTTPStatus.CREATED,
-                content={"message": "Organization created successfully", "organization_name": new_organization.name}
+            return CustomResponseHandler.success(
+                message="Organization created successfully",
+                data={"organization_name": new_organization.name},
+                status_code=HTTPStatus.CREATED
             )
         except Exception as e:
-            return JSONResponse(
-                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                content={"message": f"Internal server error. ERROR: {e}"}
+            return CustomResponseHandler.error(
+                message=f"Internal server error. ERROR: {e}",
+                status_code=HTTPStatus.INTERNAL_SERVER_ERROR
             )

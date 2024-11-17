@@ -1,3 +1,6 @@
+from fastapi import Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from pydantic import BaseSettings
 from functools import lru_cache
 from dotenv import load_dotenv
@@ -9,16 +12,6 @@ class Config(BaseSettings):
     backend_port: int
     is_reload: bool
     database_url: str
-    jwt_secret_key: str
-    access_token_expire_minutes: int
-    database_url: str
-    smtp_server: str
-    smtp_port: int
-    smtp_user: str
-    smtp_password: str
-    frontend_url: str
-    email_verification_token_expire_minutes: int
-    refresh_token_expire_days: int = 30     
 
     class Config:
         env_path = ".env"
@@ -27,3 +20,18 @@ class Config(BaseSettings):
 @lru_cache()
 def get_config():
     return Config()
+
+
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    errors = exc.errors()
+    custom_errors = [
+        {
+            "field": error["loc"][-1],
+            "message": error["msg"],  # The actual error message
+        }
+        for error in errors
+    ]
+    return JSONResponse(
+        status_code=400,
+        content={"message": "Validation failed", "errors": custom_errors}
+    )
