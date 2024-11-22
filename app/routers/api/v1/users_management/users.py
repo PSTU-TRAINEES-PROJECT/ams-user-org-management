@@ -29,29 +29,29 @@ async def get_users(db: AsyncSession = Depends(get_db), x_user_id_from_request: 
 @user_router.post("/update-user-status")
 async def update_user_status(status: Status, db: AsyncSession = Depends(get_db), x_user_id_from_request: str = Depends(authenticate_header)):
     print(f"x_user_id_from_request: {x_user_id_from_request}")
-    return await user_service.update_user_status(x_user_id_from_request, status, db)
+    return await user_service.update_user_status(int(x_user_id_from_request), status, db)
 
 
 
 @user_router.get("/get-user")
 async def get_user(db: AsyncSession = Depends(get_db), x_user_id_from_request: str = Depends(authenticate_header)):
     print(f"x_user_id_from_request: {x_user_id_from_request}")
-    return await user_service.get_user(x_user_id_from_request, db)
+    return await user_service.get_user(int(x_user_id_from_request), db)
 
 
 @user_router.post("/update-user")
 async def update_user(user_update_data: UserUpdateData, db: AsyncSession = Depends(get_db), x_user_id_from_request: str = Depends(authenticate_header)):
     print(f"x_user_id_from_request: {x_user_id_from_request}")
-    return await user_service.update_user(x_user_id_from_request, user_update_data, db)
+    return await user_service.update_user(int(x_user_id_from_request), user_update_data, db)
 
 
 
 @user_router.delete("/delete-user")
 async def delete_user(db: AsyncSession = Depends(get_db), x_user_id_from_request: str = Depends(authenticate_header)):
     print(f"x_user_id_from_request: {x_user_id_from_request}")
-    return await user_service.delete_user(x_user_id_from_request, db)
+    return await user_service.delete_user(int(x_user_id_from_request), db)
 
 @user_router.post("/update-user-profile-image")
 async def update_user_profile_image(file: UploadFile = File(...), db: AsyncSession = Depends(get_db), x_user_id_from_request: str = Depends(authenticate_header)):
     print(f"x_user_id_from_request: {x_user_id_from_request}")
-    return await user_service.update_user_profile_image(x_user_id_from_request, file, db)
+    return await user_service.update_user_profile_image(int(x_user_id_from_request), file, db)
